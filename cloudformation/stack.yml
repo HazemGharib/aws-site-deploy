@@ -1,12 +1,49 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: A CloudFormation template to create an S3 bucket.
+Description: A CloudFormation template to create an S3 bucket and a Cloudfront distribution.
 Resources:
   StaticWebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: my-bucket
+      BucketName: hazem-testing-bucket
       WebsiteConfiguration:
         IndexDocument: index.html
+  StaticWebsiteDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        DefaultCacheBehavior:
+          TargetOriginId: MyCDN
+          ViewerProtocolPolicy: redirect-to-https
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+        Enabled: true
+        Origins:
+          - DomainName: !GetAtt StaticWebsiteBucket.RegionalDomainName
+            Id: MyCDN
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub
+                - origin-access-identity/cloudfront/${OriginAccessIdentity}
+                - OriginAccessIdentity: !Ref StaticWebsiteDistributionOriginAccessIdentity
+  StaticWebsiteDistributionOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: MyCDN
+  StaticWebsiteDistributionBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StaticWebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${StaticWebsiteDistributionOriginAccessIdentity}
+            Action: s3:GetObject
+            Resource: !Sub
+              - ${BucketArn}/*
+              - BucketArn: !GetAtt StaticWebsiteBucket.Arn
 Outputs:
   BucketName:
     Description: Name of the S3 bucket

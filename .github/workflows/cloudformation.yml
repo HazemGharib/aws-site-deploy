@@ -1,4 +1,4 @@
-name: Deploy to Infra to AWS
+name: CloudFormation
 
 on:
   pull_request:
@@ -20,4 +20,4 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Deploy to CloudFormation 🚀
         run: |
-          aws cloudformation deploy --template-file /cloudformation/stack.yml --stack-name ${{ secrets.AWS_CLOUDFORMATION_STACK}}
+          aws cloudformation deploy --template-file ./cloudformation/stack.yml --stack-name ${{ secrets.AWS_CLOUDFORMATION_STACK}}
