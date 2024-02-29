@@ -24,16 +24,17 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Deploy CloudFormation Stack 🚀
         run: |
-          aws cloudformation deploy --template-file ./cloudformation/stack.yml --stack-name hazem-testing-stack
-          echo "Domain Name: $(aws cloudformation describe-stacks --stack-name hazem-testing-stack --query "Stacks[0].Outputs[?OutputKey=='StaticWebsiteDistributionDomainName'].OutputValue" --output text)"
-          echo "Distribution ID: $(aws cloudfront list-distributions --output json | jq '.DistributionList.Items[] | select(.Origins.Items[].DomainName | contains("hazem-testing-bucket.s3"))'.Id)"
+          aws cloudformation deploy --template-file ./cloudformation/stack.yml --stack-name <your-stack-name>
+          echo "Domain Name: $(aws cloudformation describe-stacks --stack-name <your-stack-name> --query "Stacks[0].Outputs[?OutputKey=='StaticWebsiteDistributionDomainName'].OutputValue" --output text)"
+          echo "Distribution ID: $(aws cloudfront list-distributions --output json | jq '.DistributionList.Items[] | select(.Origins.Items[].DomainName | contains("<your-unique-bucket-name>.s3"))'.Id)"
+      ## Uncomment the following lines if you need to install dependencies and build your package
       # - name: Install dependencies 📦
       #   run: pnpm install
       # - name: Build package 🏗
       #   run: pnpm build
       - name: Deploy to S3 🚀
         run: |
-          aws s3 sync ./src s3://hazem-testing-bucket --delete
+          aws s3 sync ./src s3://<your-unique-bucket-name> --delete
       - name: Invalidate CloudFront Cache 🧹
         run: |
-          aws cloudfront create-invalidation --distribution-id E1M87D8X17UEXP --paths "/*"
+          aws cloudfront create-invalidation --distribution-id <your-distribution-id> --paths "/*"
