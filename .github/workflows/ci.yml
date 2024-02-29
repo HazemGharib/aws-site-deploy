@@ -5,7 +5,7 @@ on:
     branches:
       - master
   workflow_dispatch:
-    
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,24 +16,33 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 8
+      - name: Cache pnpm modules 💾
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.pnpm-store
+            **/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
       - name: Set up AWS CLI 🛠
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-      - name: Deploy CloudFormation Stack 🚀
+      - name: Deploy CloudFormation stack 🚀
         run: |
           aws cloudformation deploy --template-file ./cloudformation/stack.yml --stack-name hazem-testing-stack
           echo "Domain Name: $(aws cloudformation describe-stacks --stack-name hazem-testing-stack --query "Stacks[0].Outputs[?OutputKey=='StaticWebsiteDistributionDomainName'].OutputValue" --output text)"
           echo "Distribution ID: $(aws cloudfront list-distributions --output json | jq '.DistributionList.Items[] | select(.Origins.Items[].DomainName | contains("hazem-testing-bucket.s3"))'.Id)"
-      # - name: Install dependencies 📦
-      #   run: pnpm install
-      # - name: Build package 🏗
-      #   run: pnpm build
-      - name: Deploy to S3 🚀
+      - name: Install dependencies 📦
+        run: pnpm install
+      - name: Build package 🏗
+        run: pnpm build
+      - name: Upload site to S3 🚀
         run: |
-          aws s3 sync ./src s3://hazem-testing-bucket --delete
-      - name: Invalidate CloudFront Cache 🧹
+          aws s3 sync ./build s3://hazem-testing-bucket --delete
+      - name: Invalidate CloudFront cache 🧹
         run: |
           aws cloudfront create-invalidation --distribution-id E1M87D8X17UEXP --paths "/*"
