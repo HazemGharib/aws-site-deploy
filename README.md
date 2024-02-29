@@ -2,7 +2,7 @@
 
 ## Description
 
-This repo will help you deploy your static web site to AWS services using CloudFormation, your code will reside inside an S3 bucket with a configurable name and will be exposed through a CloudFront distribution to be publicly accessed. 
+This repo will help you deploy your React static built web site to AWS services using CloudFormation, your code will reside inside an S3 bucket with a configurable name and will be exposed through a CloudFront distribution to be publicly accessed. 
 
 ## Prerequisites
 
