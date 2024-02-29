@@ -4,7 +4,7 @@ Resources:
   StaticWebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: hazem-testing-bucket
+      BucketName: <your-unique-bucket-name>
       WebsiteConfiguration:
         IndexDocument: index.html
   StaticWebsiteDistribution:
