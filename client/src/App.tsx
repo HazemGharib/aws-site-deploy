@@ -15,6 +15,7 @@ function App() {
         <h1>Welcome to my site</h1>
         <p>This is a static site template</p>
         <p>Deploy your site with a simple push to GitHub</p>
+        <p>If you want to show ❤️ you can <a href="https://www.buymeacoffee.com/hazemgharib" target="_blank" rel="noreferrer">Buy Me a Coffee</a></p>
       </div>
     </div>
   );

@@ -37,12 +37,16 @@ jobs:
           echo "Domain Name: $(aws cloudformation describe-stacks --stack-name hazem-testing-stack --query "Stacks[0].Outputs[?OutputKey=='StaticWebsiteDistributionDomainName'].OutputValue" --output text)"
           echo "Distribution ID: $(aws cloudfront list-distributions --output json | jq '.DistributionList.Items[] | select(.Origins.Items[].DomainName | contains("hazem-testing-bucket.s3"))'.Id)"
       - name: Install dependencies 📦
-        run: pnpm install
+        run: |
+          cd client/
+          pnpm install
       - name: Build package 🏗
-        run: pnpm build
+        run: |
+          cd client/
+          pnpm build
       - name: Upload site to S3 🚀
         run: |
-          aws s3 sync ./build s3://hazem-testing-bucket --delete
+          aws s3 sync ./client/build s3://hazem-testing-bucket --delete
       - name: Invalidate CloudFront cache 🧹
         run: |
           aws cloudfront create-invalidation --distribution-id E1M87D8X17UEXP --paths "/*"
