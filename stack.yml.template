@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: A CloudFormation template to create an S3 bucket and a Cloudfront distribution.
+Description: A CloudFormation template to create S3 buckets for client and API & a CloudFront distribution.
 Resources:
   StaticWebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: <your-unique-bucket-name>
+      BucketName: <your-client-bucket-name>
       WebsiteConfiguration:
         IndexDocument: index.html
   StaticWebsiteDistribution:
@@ -44,10 +44,18 @@ Resources:
             Resource: !Sub
               - ${BucketArn}/*
               - BucketArn: !GetAtt StaticWebsiteBucket.Arn
+  ApiBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: <your-api-bucket-name>
 Outputs:
-  BucketName:
+  ClientBucketName:
     Description: Name of the S3 bucket
     Value: !Ref StaticWebsiteBucket
+  ApiBucketName:
+    Description: Name of the API S3 bucket
+    Value: !Ref ApiBucket
   StaticWebsiteDistributionDomainName:
     Description: Domain name of the CloudFront distribution
     Value: !GetAtt StaticWebsiteDistribution.DomainName
+Transform: AWS::Serverless-2016-10-31

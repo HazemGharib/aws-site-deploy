@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: A CloudFormation template to create a Lambda function, and an HTTP API.
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: LambdaExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: "*"
+                Resource: "*"
+  Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs20.x
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Handler: index.handler
+      Code:
+        S3Bucket: <your-api-bucket-name>
+        S3Key: api/Handler.zip
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: <your-api-name>
+      ProtocolType: HTTP
+  HttpApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt Function.Arn
+      PayloadFormatVersion: '2.0'
+  HttpApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    DependsOn: HttpApiIntegration
+    Properties:
+      RouteKey: $default
+      ApiId: !Ref HttpApi
+      Target:
+        !Join
+        - /
+        - - integrations
+          - !Ref HttpApiIntegration
+  HttpApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: $default
+      ApiId: !Ref HttpApi
+      AutoDeploy: true
+  HandlerLambdaPermissionHttpApi:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt Function.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        !Join
+        - ''
+        - - 'arn:'
+          - !Ref AWS::Partition
+          - ':execute-api:'
+          - !Ref AWS::Region
+          - ':'
+          - !Ref AWS::AccountId
+          - ':'
+          - !Ref HttpApi
+          - /*
+Outputs:
+  ApiUrl:
+    Description: URL of the HTTP API.
+    Value: 
+      !Join
+      - ''
+      - - !Ref HttpApi
+        - .execute-api.
+        - !Ref AWS::Region
+        - .
+        - !Ref AWS::URLSuffix
+Transform: AWS::Serverless-2016-10-31

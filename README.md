@@ -21,6 +21,26 @@ This repo will help you deploy your React static built web site to AWS services 
 	"Version": "2012-10-17",
 	"Statement": [
 		{
+			"Sid": "IAM",
+			"Effect": "Allow",
+			"Action": [
+					"iam:DetachRolePolicy",
+					"iam:AttachRolePolicy",
+					"iam:PutRolePolicy",
+					"iam:DeleteRolePolicy",
+					"iam:ListAttachedRolePolicies",
+					"iam:CreateRole",
+					"iam:DeleteRole",
+					"iam:TagRole",
+					"iam:PassRole",
+					"iam:UpdateAssumeRolePolicy",
+					"iam:GetRole"
+			],
+			"Resource": [
+					"arn:aws:iam::501020007382:role/*"
+			]
+		},
+		{
 			"Sid": "S3",
 			"Effect": "Allow",
 			"Action": [
@@ -49,16 +69,39 @@ This repo will help you deploy your React static built web site to AWS services 
 			"Resource": [
 				"*"
 			]
+		},
+		{
+			"Sid": "Lambda",
+			"Effect": "Allow",
+			"Action": [
+				"lambda:CreateFunction",
+				"lambda:DeleteFunction",
+				"lambda:GetFunction",
+				"lambda:AddPermission"
+			],
+			"Resource": [
+				"arn:aws:lambda:*:501020007382:function:*"
+			]
+		},
+		{
+			"Sid": "ApiGateway",
+			"Effect": "Allow",
+			"Action": [
+				"apigateway:*"
+			],
+			"Resource": [
+				"arn:aws:apigateway:*::/apis*"
+			]
 		}
 	]
 }
 ```
 2. Make sure that you have created the 3 needed secrets in your repository secrets.
-3. On code level, search for this string `<your-`, it should show 6 positions to change some values according to your usecase.
+3. On code level, search for this string `<your-`, it should show 12 positions to change some values according to your usecase.
 4. for the value `<your-distribution-id>` you can leave it for the first deployment, first deployment will fail anyways because you'll still need to fill this value after the stack is created.
 5. Go ahead and change your source files and commit it to a branch and open a PR, this is enogh to trigger a GitHub Actions build.
 The build will proceed until it deploys the stack then it will failm this is expected.
 6. Check your `distribution-id` of your CloudFront distribution in the Github Actions build logs and update that value in `ci.yml` file.
 7. Trigger the build again, this time it should pass.
-8. Check your build outputs, it should log your CloudFront domain. CloudFront domain is usually something that looks like this: `https://xyz123.cloudfront.net`.
-9. Check your website at this CloudFront domain, it should be something like this `https://xyz123.cloudfront.net/index.html`
+8. Check your build outputs, it should log your CloudFront url and API url. CloudFront url is usually something that looks like this: `https://xyz123.cloudfront.net`, and API url should look like this `https://xyz123.execute-api.<AWS_REGION>.amazonaws.com/`.
+9. Check your website at this CloudFront domain, it should be something like this `https://xyz123.cloudfront.net/index.html`.
