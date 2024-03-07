@@ -5,13 +5,13 @@ on:
     branches:
       - master
   workflow_dispatch:
-    
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code 🛎
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up pnpm 🛠
         uses: pnpm/action-setup@v3
         with:
@@ -33,16 +33,33 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Deploy CloudFormation stack 🚀
         run: |
-          aws cloudformation deploy --template-file ./cloudformation/stack.yml --stack-name <your-stack-name>
-          echo "Domain Name: $(aws cloudformation describe-stacks --stack-name <your-stack-name> --query "Stacks[0].Outputs[?OutputKey=='StaticWebsiteDistributionDomainName'].OutputValue" --output text)"
-          echo "Distribution ID: $(aws cloudfront list-distributions --output json | jq '.DistributionList.Items[] | select(.Origins.Items[].DomainName | contains("<your-unique-bucket-name>.s3"))'.Id)"
-      - name: Install dependencies 📦
-        run: pnpm install
-      - name: Build package 🏗
-        run: pnpm build
+          aws cloudformation deploy --template-file ./stack.yml --stack-name <your-client-stack-name> --capabilities CAPABILITY_IAM
+          echo "Domain Name: $(aws cloudformation describe-stacks --stack-name <your-client-stack-name> --query "Stacks[0].Outputs[?OutputKey=='StaticWebsiteDistributionDomainName'].OutputValue" --output text)"
+          echo "Distribution ID: $(aws cloudfront list-distributions --output json | jq '.DistributionList.Items[] | select(.Origins.Items[].DomainName | contains("<your-client-bucket-name>.s3"))'.Id)"
+      - name: Install front end dependencies 📦
+        run: |
+          cd client/
+          pnpm install
+      - name: Build front end package 🏗
+        run: |
+          cd client/
+          pnpm build
       - name: Upload site to S3 🚀
         run: |
-          aws s3 sync ./build s3://<your-unique-bucket-name> --delete
+          aws s3 sync ./client/build s3://<your-client-bucket-name> --delete
       - name: Invalidate CloudFront cache 🧹
         run: |
           aws cloudfront create-invalidation --distribution-id <your-distribution-id> --paths "/*"
+      - name: Install back end dependencies 📦
+        run: |
+          cd api/
+          pnpm install
+      - name: Upload back end to S3 🚀
+        run: |
+          cd api/
+          zip -r Handler.zip .
+          aws s3 cp Handler.zip s3://<your-api-bucket-name>/api/Handler.zip
+      - name: Deploy back end 🚀
+        run: |
+          aws cloudformation deploy --template-file ./lambda.yml --stack-name <your-api-stack-name> --capabilities CAPABILITY_NAMED_IAM
+          echo "API Gateway URL: $(aws cloudformation describe-stacks --stack-name <your-api-stack-name> --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text)"
