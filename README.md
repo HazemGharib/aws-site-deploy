@@ -37,7 +37,7 @@ This repo will help you deploy your React static built web site to AWS services 
 					"iam:GetRole"
 			],
 			"Resource": [
-					"arn:aws:iam::501020007382:role/*"
+					"arn:aws:iam::<aws_account_id>:role/*"
 			]
 		},
 		{
@@ -80,7 +80,7 @@ This repo will help you deploy your React static built web site to AWS services 
 				"lambda:AddPermission"
 			],
 			"Resource": [
-				"arn:aws:lambda:*:501020007382:function:*"
+				"arn:aws:lambda:*:<aws_account_id>:function:*"
 			]
 		},
 		{
